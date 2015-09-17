@@ -8,6 +8,7 @@ import (
 	"log"
 	//	"strconv"
 	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -59,7 +60,7 @@ func main() {
 		//		log.Print(len(result))
 
 		for _, y := range result {
-			log.Println(y.Query.c14n())
+			log.Println(y.Query.c14n(), y.Id, y.Time)
 		}
 
 		time.Sleep(sleepDuration)
@@ -91,6 +92,7 @@ func getColByName(name string, cols []string, vals []interface{}) *string {
 type selectQuery string
 
 type procEntry struct {
+	Id    int64
 	Time  int
 	Query selectQuery
 }
@@ -151,6 +153,8 @@ func getActiveQueries(db *sql.DB) []procEntry {
 			panic(err)
 		}
 
+		id := getColByName("Id", cols, vals)
+		timez := getColByName("Time", cols, vals)
 		cmd := getColByName("Command", cols, vals)
 		info := getColByName("Info", cols, vals)
 
@@ -158,15 +162,23 @@ func getActiveQueries(db *sql.DB) []procEntry {
 			continue
 		}
 
+		idInt, err := strconv.ParseInt(*id, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		timeInt, err := strconv.Atoi(*timez)
+		if err != nil {
+			panic(err)
+		}
+
 		output = append(output, procEntry{
+			Id:    idInt,
+			Time:  timeInt,
 			Query: selectQuery(*info),
 		})
 	}
 
 	return output
 	//	return sessions
-}
-
-func c14n(string) {
-
 }
