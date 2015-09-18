@@ -60,7 +60,7 @@ func (qry *selectQuery) c14n() string {
 
 	lastOut = out
 	for {
-		out = regexp.MustCompile(`(?m)(^|\s|,|\()\d+($|\s|,|\))`).ReplaceAllString(out, `$1[[int]]$2`)
+		out = regexp.MustCompile(`(?m)(^|\s|,|\()\-?\d+($|\s|,|\))`).ReplaceAllString(out, `$1[[int]]$2`)
 		if out == lastOut {
 			break
 		}
