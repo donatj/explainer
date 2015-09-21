@@ -80,6 +80,7 @@ func (qry *selectQuery) csha1() string {
 
 type explainEntry struct {
 	Table string
+	Key   string
 	Rows  int
 }
 
@@ -109,6 +110,7 @@ func (qry *selectQuery) explain(db *sql.DB) ([]explainEntry, error) {
 
 		tbl := getColByName("table", cols, vals)
 		rows := getColByName("rows", cols, vals)
+		key := getColByName("key", cols, vals)
 
 		rowInt, err := strconv.Atoi(*rows)
 		if err != nil {
@@ -118,6 +120,7 @@ func (qry *selectQuery) explain(db *sql.DB) ([]explainEntry, error) {
 		output = append(output, explainEntry{
 			Table: *tbl,
 			Rows:  rowInt,
+			Key:   *key,
 		})
 	}
 
