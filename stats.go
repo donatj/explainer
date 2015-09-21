@@ -1,5 +1,10 @@
 package main
 
+import (
+	"math"
+	"strconv"
+)
+
 type MinMaxAvg struct {
 	Min    int
 	Max    int
@@ -10,7 +15,7 @@ type MinMaxAvg struct {
 
 func newMinMaxAvg() *MinMaxAvg {
 	return &MinMaxAvg{
-		Min: 2147483648,
+		Min: math.MaxInt32,
 	}
 }
 
@@ -28,7 +33,46 @@ func (d *MinMaxAvg) AddValue(val int) {
 	d.Count += 1
 }
 
-type TableStats map[string]*MinMaxAvg
+type Histo map[string]int
+
+func (d *Histo) AddValue(val int) {
+	(*d)[strconv.Itoa(val)] += 1
+}
+
+type MinMaxAvgHisto struct {
+	Histo
+	MinMaxAvg
+}
+
+func newMinMaxAvgHisto() *MinMaxAvgHisto {
+	return &MinMaxAvgHisto{
+		Histo:     make(Histo),
+		MinMaxAvg: *newMinMaxAvg(),
+	}
+}
+
+func (d *MinMaxAvgHisto) AddValue(val int) {
+	d.Histo.AddValue(val)
+	d.MinMaxAvg.AddValue(val)
+}
+
+type TableMinMaxAvgHisto struct {
+	IndexHisto Histo
+	MinMaxAvgHisto
+}
+
+func newTableMinMaxAvgHisto() *TableMinMaxAvgHisto {
+	return &TableMinMaxAvgHisto{
+		IndexHisto:     make(Histo),
+		MinMaxAvgHisto: *newMinMaxAvgHisto(),
+	}
+}
+
+func (d *TableMinMaxAvgHisto) AddIndex(val string) {
+	d.IndexHisto[val] += 1
+}
+
+type TableStats map[string]*TableMinMaxAvgHisto
 
 type QueryStat struct {
 	TblStats TableStats

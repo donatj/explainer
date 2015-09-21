@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"flag"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"os"
@@ -72,10 +73,11 @@ func main() {
 
 			for _, e := range exp {
 				if _, ok := data[c].TblStats[e.Table]; !ok {
-					data[c].TblStats[e.Table] = newMinMaxAvg()
+					data[c].TblStats[e.Table] = newTableMinMaxAvgHisto()
 				}
 
 				data[c].TblStats[e.Table].AddValue(e.Rows)
+				data[c].TblStats[e.Table].AddIndex(e.Key)
 			}
 		}
 
@@ -87,10 +89,13 @@ func main() {
 
 			enc := json.NewEncoder(f)
 
-			enc.Encode(data)
+			err = enc.Encode(data)
+			if err != nil {
+				panic(err)
+			}
 
 			f.Close()
-
+			fmt.Println(".", len(result), len(data))
 		}
 
 		time.Sleep(sleepDuration)
