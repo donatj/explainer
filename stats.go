@@ -77,6 +77,7 @@ type TableStats map[string]*TableMinMaxAvgHisto
 type QueryStat struct {
 	TblStats TableStats
 	LastQry  string
+	C14nQry  string
 }
 
 func newQueryStat() *QueryStat {

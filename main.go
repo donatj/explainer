@@ -70,6 +70,7 @@ func main() {
 			}
 
 			data[c].LastQry = string(y.Query)
+			data[c].C14nQry = y.Query.c14n()
 
 			for _, e := range exp {
 				if _, ok := data[c].TblStats[e.Table]; !ok {
