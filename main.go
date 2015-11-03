@@ -85,30 +85,7 @@ func updateLoop(db *sql.DB) {
 				continue
 			}
 
-			c := y.Query.csha1()
-
-			if _, ok := data[c]; !ok {
-				data[c] = newQueryStat()
-			}
-
-			data[c].LastSeenTimestamp = time.Now().Unix()
-			data[c].LastQry = string(y.Query)
-			data[c].C14nQry = y.Query.c14n()
-
-			totalRows := 0
-			for _, e := range exp {
-				if _, ok := data[c].TblStats[e.Table]; !ok {
-					data[c].TblStats[e.Table] = newTableMinMaxAvgHisto()
-				}
-
-				data[c].TblStats[e.Table].AddValue(e.Rows)
-				data[c].TblStats[e.Table].AddIndex(e.Key)
-
-				totalRows += e.Rows
-			}
-
-			data[c].PowerHisto.AddValue(totalRows)
-			data[c].QueryPowerSamples.AddSample(totalRows, data[c].LastQry)
+			data.AddQueryStat(y.Query, exp)
 		}
 
 		if len(result) > 0 {

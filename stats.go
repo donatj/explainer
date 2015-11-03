@@ -3,6 +3,7 @@ package main
 import (
 	"math"
 	"strconv"
+	"time"
 )
 
 type MinMaxAvg struct {
@@ -93,16 +94,57 @@ type QueryStat struct {
 	LastSeenTimestamp int64
 	LastQry           string
 	C14nQry           string
-	PowerHisto        Log10Histo
-	QueryPowerSamples QueryLog10Log
+
+	PowerSumHisto        Log10Histo
+	QuerySumPowerSamples QueryLog10Log
+
+	PowerProductHisto        Log10Histo
+	QueryProductPowerSamples QueryLog10Log
 }
 
 func newQueryStat() *QueryStat {
 	return &QueryStat{
-		TblStats:          make(TableStats),
-		PowerHisto:        make(Log10Histo),
-		QueryPowerSamples: make(QueryLog10Log),
+		TblStats: make(TableStats),
+
+		PowerSumHisto:        make(Log10Histo),
+		QuerySumPowerSamples: make(QueryLog10Log),
+
+		PowerProductHisto:        make(Log10Histo),
+		QueryProductPowerSamples: make(QueryLog10Log),
 	}
 }
 
 type QueryStats map[string]*QueryStat
+
+func (qs *QueryStats) AddQueryStat(qry selectQuery, exp []explainEntry) {
+	q := (*qs)
+	c := qry.csha1()
+
+	if _, ok := q[c]; !ok {
+		q[c] = newQueryStat()
+	}
+
+	q[c].LastSeenTimestamp = time.Now().Unix()
+	q[c].LastQry = string(qry)
+	q[c].C14nQry = qry.c14n()
+
+	rowSum := 0
+	rowProduct := 1
+	for _, e := range exp {
+		if _, ok := data[c].TblStats[e.Table]; !ok {
+			q[c].TblStats[e.Table] = newTableMinMaxAvgHisto()
+		}
+
+		q[c].TblStats[e.Table].AddValue(e.Rows)
+		q[c].TblStats[e.Table].AddIndex(e.Key)
+
+		rowSum += e.Rows
+		rowProduct *= e.Rows
+	}
+
+	q[c].PowerSumHisto.AddValue(rowSum)
+	q[c].QuerySumPowerSamples.AddSample(rowSum, q[c].LastQry)
+
+	q[c].PowerProductHisto.AddValue(rowProduct)
+	q[c].QueryProductPowerSamples.AddSample(rowProduct, q[c].LastQry)
+}
