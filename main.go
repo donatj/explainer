@@ -7,18 +7,25 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
+	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
 var (
-	dsn       string
-	sleepTime *uint
+	dsn string
+
+	port      = flag.Uint("port", 8080, "The network port")
+	sleepTime = flag.Uint("sleep", 500, "Time to sleep in ms")
+)
+
+var (
+	httpUser = flag.String("basic-http-user", "", "Username for basic auth protected pages")
+	httpPass = flag.String("basic-http-pass", "", "Password for basic auth protected pages")
 )
 
 func init() {
-	sleepTime = flag.Uint("sleep", 500, "Time to sleep in ms")
-
 	flag.Parse()
 	if flag.NArg() != 1 {
 		log.Fatal("First argument must be a valid DSN in the format of [username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]\n\texample: username:password@tcp(10.10.10.10:3306)/databaseName")
@@ -41,16 +48,31 @@ func getDb(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
+var (
+	data = make(QueryStats)
+)
+
 func main() {
 	log.Println("starting...")
-	sleepDuration := time.Duration(*sleepTime) * time.Millisecond
 
 	db, err := getDb(dsn)
 	if err != nil {
-		log.Fatal(dsn)
+		log.Fatal(err)
 	}
 
-	data := make(QueryStats)
+	go updateLoop(db)
+
+	http.HandleFunc("/queryData/", BasicAuth(func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(data)
+	}, *httpUser, *httpPass))
+
+	err = http.ListenAndServe(":"+strconv.Itoa(int(*port)), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func updateLoop(db *sql.DB) {
 
 	for {
 		result := getActiveQueries(db)
@@ -69,6 +91,7 @@ func main() {
 				data[c] = newQueryStat()
 			}
 
+			data[c].LastSeenTimestamp = time.Now().Unix()
 			data[c].LastQry = string(y.Query)
 			data[c].C14nQry = y.Query.c14n()
 
@@ -105,6 +128,6 @@ func main() {
 			fmt.Println(".", len(result), len(data))
 		}
 
-		time.Sleep(sleepDuration)
+		time.Sleep(time.Duration(*sleepTime) * time.Millisecond)
 	}
 }
