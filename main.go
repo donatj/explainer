@@ -72,6 +72,7 @@ func main() {
 			data[c].LastQry = string(y.Query)
 			data[c].C14nQry = y.Query.c14n()
 
+			totalRows := 0
 			for _, e := range exp {
 				if _, ok := data[c].TblStats[e.Table]; !ok {
 					data[c].TblStats[e.Table] = newTableMinMaxAvgHisto()
@@ -79,7 +80,12 @@ func main() {
 
 				data[c].TblStats[e.Table].AddValue(e.Rows)
 				data[c].TblStats[e.Table].AddIndex(e.Key)
+
+				totalRows += e.Rows
 			}
+
+			data[c].PowerHisto.AddValue(totalRows)
+			data[c].QueryPowerSamples.AddSample(totalRows, data[c].LastQry)
 		}
 
 		if len(result) > 0 {

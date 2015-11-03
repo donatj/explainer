@@ -39,6 +39,13 @@ func (d *Histo) AddValue(val int) {
 	(*d)[strconv.Itoa(val)] += 1
 }
 
+type Log10Histo map[string]int
+
+func (d *Log10Histo) AddValue(val int) {
+	index := strconv.Itoa(int(math.Log10(float64(val))))
+	(*d)[index] += 1
+}
+
 type MinMaxAvgHisto struct {
 	Histo
 	MinMaxAvg
@@ -74,15 +81,27 @@ func (d *TableMinMaxAvgHisto) AddIndex(val string) {
 
 type TableStats map[string]*TableMinMaxAvgHisto
 
+type QueryLog10Log map[string]string
+
+func (d *QueryLog10Log) AddSample(val int, query string) {
+	index := strconv.Itoa(int(math.Log10(float64(val))))
+	(*d)[index] = query
+}
+
 type QueryStat struct {
-	TblStats TableStats
-	LastQry  string
-	C14nQry  string
+	TblStats          TableStats
+	LastSeenTimestamp int64
+	LastQry           string
+	C14nQry           string
+	PowerHisto        Log10Histo
+	QueryPowerSamples QueryLog10Log
 }
 
 func newQueryStat() *QueryStat {
 	return &QueryStat{
-		TblStats: make(TableStats),
+		TblStats:          make(TableStats),
+		PowerHisto:        make(Log10Histo),
+		QueryPowerSamples: make(QueryLog10Log),
 	}
 }
 
