@@ -4,11 +4,12 @@ import (
 	"crypto/sha1"
 	"database/sql"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"io"
 	"log"
 	"regexp"
 	"strconv"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func colPos(slice []string, value string) int {
@@ -100,7 +101,7 @@ func (qry *selectQuery) explain(db *sql.DB) ([]explainEntry, error) {
 
 	for rows.Next() {
 		vals := make([]interface{}, len(cols))
-		for i, _ := range cols {
+		for i := range cols {
 			vals[i] = new(sql.RawBytes)
 		}
 		err = rows.Scan(vals...)
@@ -145,7 +146,7 @@ func getActiveQueries(db *sql.DB) []procEntry {
 
 	for rows.Next() {
 		vals := make([]interface{}, len(cols))
-		for i, _ := range cols {
+		for i := range cols {
 			vals[i] = new(sql.RawBytes)
 		}
 		err = rows.Scan(vals...)

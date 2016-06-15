@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
