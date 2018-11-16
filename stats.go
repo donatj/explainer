@@ -47,6 +47,14 @@ func (d *Log10Histo) AddValue(val int) {
 	(*d)[index] += 1
 }
 
+type TimeOfDayHisto map[string]int
+
+func (d *TimeOfDayHisto) AddTimestamp(unix int64, res int64) {
+	key := int(((unix % 86400) / res) * res)
+	index := strconv.Itoa(key)
+	(*d)[index] += 1
+}
+
 type MinMaxAvgHisto struct {
 	Histo
 	MinMaxAvg
@@ -100,6 +108,8 @@ type QueryStat struct {
 
 	PowerProductHisto        Log10Histo
 	QueryProductPowerSamples QueryLog10Log
+
+	TimeOfDayHisto TimeOfDayHisto
 }
 
 func newQueryStat() *QueryStat {
@@ -111,6 +121,8 @@ func newQueryStat() *QueryStat {
 
 		PowerProductHisto:        make(Log10Histo),
 		QueryProductPowerSamples: make(QueryLog10Log),
+
+		TimeOfDayHisto: make(TimeOfDayHisto),
 	}
 }
 
@@ -147,4 +159,6 @@ func (qs *QueryStats) AddQueryStat(qry selectQuery, exp []explainEntry) {
 
 	q[c].PowerProductHisto.AddValue(rowProduct)
 	q[c].QueryProductPowerSamples.AddSample(rowProduct, q[c].LastQry)
+
+	q[c].TimeOfDayHisto.AddTimestamp(time.Now().Unix(), 60*1)
 }
