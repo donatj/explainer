@@ -128,6 +128,8 @@ func (qry *selectQuery) explain(db *sql.DB) ([]explainEntry, error) {
 	return output, nil
 }
 
+var isSelect = regexp.MustCompile("(?i)^\\s*select\\s")
+
 func getActiveQueries(db *sql.DB) []procEntry {
 	rows, err := db.Query("SHOW FULL PROCESSLIST")
 	if err != nil {
@@ -141,8 +143,6 @@ func getActiveQueries(db *sql.DB) []procEntry {
 	}
 
 	output := make([]procEntry, 0)
-
-	isSelect := regexp.MustCompile("(?i)^\\s*select\\s")
 
 	for rows.Next() {
 		vals := make([]interface{}, len(cols))
